@@ -1,24 +1,49 @@
 import mongoose from "mongoose";
-const userSchema = new mongoose.Schema({
-    fullname: {String, required: true},
-    email: {String, required: true, unique: true},
-    password: {String, required: true},
-    role: {String, default: "user"
 
-    }, // user or admin
-    profile: {
-        bio: {String, default: ""},
-        profilePicture: {String, default: ""},
-        coverPicture: {String, default: ""},
-        experience: {Array, default: []}, // Array of experience objects
-        education: {Array, default: []}, // Array of education objects
-        Skills: {Array, default: []}, // Array of skills
-        company: {type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null}, // Reference to Company model
-    },
-    resume: {String, default: ""}, // URL to resume file
-    resumeFileName: {String, default: ""}, // Original file name of the resume
-    
-    createdAt: {type: Date, default: Date.now},
-    updatedAt: {type: Date, default: Date.now}
-}, {timestamps: true});
+// Define the schema for a user
+const userSchema = new mongoose.Schema({
+  fullname: { type: String, required: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true },
+
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+
+  profile: {
+    bio: { type: String, default: "" },
+    profilePicture: { type: String, default: "" },
+    coverPicture: { type: String, default: "" },
+    experience: [{ 
+      title: String, 
+      company: String, 
+      from: Date, 
+      to: Date, 
+      description: String 
+    }],
+    education: [{ 
+      institution: String, 
+      degree: String, 
+      year: String 
+    }],
+    skills: [{ type: String }],
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null }
+  },
+
+  socialLinks: {
+    linkedin: { type: String, default: "" },
+    github: { type: String, default: "" },
+    portfolio: { type: String, default: "" }
+  },
+
+  resume: { type: String, default: "" },
+  resumeFileName: { type: String, default: "" },
+
+  smartTags: [{ type: String }], // e.g., "Top React Dev", "Full Stack", etc.
+  aiSuggestedRoles: [{ type: String }], // AI-generated career recommendations
+
+}, { timestamps: true });
+
 export default mongoose.model("User", userSchema);

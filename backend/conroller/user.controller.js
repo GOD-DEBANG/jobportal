@@ -1,152 +1,90 @@
-import bcrypt from 'bcrypt';
-export const registerUser = async (req, res) => { //REGISTER FUNCTION
-    try {
-         const { fullname, email, password } = req.body;
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import axios from "axios";
 
-        // Validate input
-        if (!fullname || !email || !password) {
-            return res.status(400).json({ message: "All fields are required", success: false });
-        }
-        // Check if user already exists
-        const existingUser = await User.findOne({
-            email: email.toLowerCase()
-        });
-        if (existingUser) {
+// Load ENV AI API
+const SMART_AI_API = process.env.SMART_AI_API;
 
-            return res.status(400).json({ message: "User already exists", success: false });
-        }
-        // Create new user
-        const hasedpassword = await bcrypt.hash(password, 10);{
-            password: hasedpassword
-        }
-        const newUser = new User({
-            fullname,
-            email: email.toLowerCase(),
-            password: hasedpassword,
-            role: "user" // Default role
-        });
-        await newUser.save();
-        return res.status(201).json({ message: "User registered successfully", success: true });
-    }
-    catch (error) {
-        console.error("Error registering user:", error);
-        return res.status(500).json({ message: "Internal server error", success: false });
-    }
-}
-export const loginUser = async (req, res) => { //LOGIN FUNCTION
-     try {
-        const { email, password } = req.body;
+// Register User
+export const registerUser = async (req, res) => {
+  try {
+    const { fullname, email, password } = req.body;
 
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email and password are required", success: false });
-        }
+    const userExists = await User.findOne({ email });
+    if (userExists) return res.status(409).json({ message: "Email already exists" });
 
-        // Find user by email
-        const user = await user.findOne({ email: email.toLowerCase() });
-        if (!user) {
-            return res.status(404).json({ message: "User not found", success: false });
-        }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const newUser = await User.create({ fullname, email, password: hashedPassword });
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Invalid credentials", success: false });
-        }
+    res.status(201).json({ message: "Registration successful", user: newUser });
+  } catch (err) {
+    res.status(500).json({ message: "Registration failed", error: err.message });
+  }
+};
 
-        // Return user data (excluding password)
-        const { password: _, ...userData } = user.toObject();
-        return res.status(200).json({ message: "Login successful", success: true, user: userData });
+// Login
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.status(200).json({ token, user });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed", error: err.message });
+  }
+};
+
+// Logout
+export const logoutUser = (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
+// Update Profile
+export const updateProfile = async (req, res) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $set: req.body },
+      { new: true }
+    );
+    res.status(200).json({ message: "Profile updated", user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ message: "Profile update failed", error: err.message });
+  }
+};
+
+// 🔍 Smart Resume Analyzer (AI Integration)
+export const analyzeResume = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user || !user.resume) {
+      return res.status(404).json({ message: "User or resume not found" });
     }
-    catch (error) {
-        console.error("Error logging in user:", error);
-        return res.status(500).json({ message: "Internal server error", success: false });
-    }
-    //check role is correct or not
-    if(role !== "user" && role !== "admin"){
-        return res.status(403).json({ message: "Access denied", success: false });
-    }
-    else{
-        return res.status(200).json({ message: "Access granted", success: true });
-    }
-    //generate token
-    const tokendata = {
-        id: user._id,
-        email: user.email,
-        role: user.role
-    }
-    const token = await jwt.sign(tokendata, process.env.SECRET_KEY, { expiresIn: "1d" });
-    res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-        sameSite: "strict"
+
+    const response = await axios.post(SMART_AI_API, {
+      resumeUrl: user.resume,
+      skills: user.profile.skills
     });
-    return res.status(200).json({ message: "Login successful", success: true, user: userData, token });
-}
-export const logoutUser = async (req, res) => {  //LOG-OUT FUNCTION
-    try {
-        res.clearCookie("token");
-        return res.status(200).json({ message: "Logout successful", success: true });
-    } catch (error) {
-        console.error("Error logging out user:", error);
-        return res.status(500).json({ message: "Internal server error", success: false });
-    }
-}
-export const updateprofile = async (req, res) => { //UPDATE PROFILE FUNCTION
-    try {
-        const { userId } = req.params;
-        const { bio, profilePicture, coverPicture, experience, education, skills } = req.body;
 
-        // Validate input
-        if (!userId || !bio || !profilePicture || !coverPicture) {
-            return res.status(400).json({ message: "All fields are required", success: false });
-        }
+    const { smartTags, aiSuggestedRoles } = response.data;
 
-        // Find user and update profile
-        const user = await user.findByIdAndUpdate(
-            userId,
-            {
-                $set: {
-                    "profile.bio": bio,
-                    "profile.profilePicture": profilePicture,
-                    "profile.coverPicture": coverPicture,
-                    "profile.experience": experience,
-                    "profile.education": education,
-                    "profile.skills": skills
-                }
-            },
-            { new: true }
-        );
+    user.smartTags = smartTags;
+    user.aiSuggestedRoles = aiSuggestedRoles;
+    await user.save();
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found", success: false });
-        }
-
-        return res.status(200).json({ message: "Profile updated successfully", success: true, user });
-    } catch (error) {
-        console.error("Error updating profile:", error);
-        return res.status(500).json({ message: "Internal server error", success: false });
-    }
-}
-export const getUserProfile = async (req, res) => { //GET USER PROFILE FUNCTION
-    try {
-        const { userId } = req.params;
-
-        // Validate input
-        if (!userId) {
-            return res.status(400).json({ message: "User ID is required", success: false });
-        }
-
-        // Find user and populate profile data
-        const user = await user.findById(userId).populate("profile.company");
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found", success: false });
-        }
-
-        return res.status(200).json({ message: "User profile retrieved successfully", success: true, user });
-    } catch (error) {
-        console.error("Error retrieving user profile:", error);
-        return res.status(500).json({ message: "Internal server error", success: false });
-    }
-}
+    res.status(200).json({
+      message: "Resume analyzed successfully",
+      smartTags,
+      aiSuggestedRoles
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Resume analysis failed", error: err.message });
+  }
+};

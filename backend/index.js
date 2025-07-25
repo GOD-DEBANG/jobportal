@@ -3,6 +3,11 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './utils/db.js'; // Make sure this file exists and exports connectDB
+import userRoutes from './routes/user.rout.js'; // Import user routes
+import jobRoutes from './routes/job.rout.js'; // Import job routes
+import applicationRoutes from './routes/application.rout.js'; // Import application routes
+import companyroutes from './routes/company.rout.js'; // Import company routes
+import axios from 'axios'; // Import axios for AI API calls
 
 dotenv.config(); //  No need to pass an empty object
 
@@ -19,7 +24,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// 🛣️ Routes
+//  Routes
 app.get("/home", (req, res) => {
     return res.status(200).json({
         message: "Hello from the backend",
@@ -40,5 +45,6 @@ const startServer = async () => {
         process.exit(1);
     }
 };
+app.use('/api/users', userRoutes); // Use user routes
 
 startServer();

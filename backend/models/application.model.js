@@ -1,15 +1,31 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+
 const applicationSchema = new mongoose.Schema({
-    job: { type: mongoose.Schema.Types.ObjectId, ref: "Job", required: true }, // Reference to Job model
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to User model
-    resume: { type: String, required: true }, // URL to the resume file
-    coverLetter: { type: String, default: "" }, // Optional cover letter
-    status: { 
-        type: String, 
-        enum: ["Applied", "Interviewing", "Offered", "Rejected"], 
-        default: "Applied" 
-    }, // Application status
-    appliedAt: { type: Date, default: Date.now }, // Date when the application was submitted
-    updatedAt: { type: Date, default: Date.now } // Date when the application was last updated
-}, { timestamps: true });
-export default mongoose.model("Application", applicationSchema);
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  job: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job',
+    required: true
+  },
+  resume: {
+    type: String // URL or file path
+  },
+  status: {
+    type: String,
+    enum: ['applied', 'reviewing', 'interview', 'hired', 'rejected'],
+    default: 'applied'
+  },
+  coverLetter: {
+    type: String
+  },
+  appliedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+export const Application = mongoose.model('Application', applicationSchema);
