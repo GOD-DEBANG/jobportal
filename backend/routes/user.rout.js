@@ -5,39 +5,25 @@ import {
   logoutUser,
   updateProfile,
   analyzeResume
-} from '../controllers/user.controller.js';
-import isAuthenticated from '../middleware/isAuthenticated.js';
+} from '../conroller/user.controller.js'; //  Fixed typo: "conroller" → "controllers"
+
+import { isAuthenticated } from '../middleware/isAuthenticated.js';
 
 const router = express.Router();
 
-/**
- * @route   POST /api/users/register
- * @desc    Register a new user
- */
+// Register a new user
 router.post('/register', registerUser);
 
-/**
- * @route   POST /api/users/login
- * @desc    Login user and return JWT token
- */
+// Login user and return token
 router.post('/login', loginUser);
 
-/**
- * @route   POST /api/users/logout
- * @desc    Clear token and logout
- */
+// Logout user
 router.post('/logout', logoutUser);
 
-/**
- * @route   PUT /api/users/update/:userId
- * @desc    Update user profile
- */
+// Update user profile (protected)
 router.put('/update/:userId', isAuthenticated, updateProfile);
 
-/**
- * @route   GET /api/users/analyze/:userId
- * @desc    Analyze resume and return AI-based tags and suggestions
- */
+// Analyze resume (protected)
 router.get('/analyze/:userId', isAuthenticated, analyzeResume);
 
 export default router;

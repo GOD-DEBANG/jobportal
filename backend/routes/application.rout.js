@@ -5,8 +5,8 @@ import {
   getAllApplications,
   updateApplicationStatus,
   smartJobSearch
-} from '../controllers/application.controller.js';
-import { isAuthenticated, isAdmin } from '../middlewares/auth.middleware.js';
+} from '../conroller/application.controller.js';
+import { isAuthenticated, isAdmin } from '../middleware/isAuthenticated.js';
 
 const router = express.Router();
 

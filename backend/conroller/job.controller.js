@@ -35,7 +35,7 @@ export const postJob = async (req, res) => {
 };
 
 // Get all jobs with optional filters
-export const getAllJobs = async (req, res) => {
+export const getAllJobs= async (req, res) => {
     try {
         const filters = req.query || {};
         const jobs = await Job.find(filters).populate('company postedBy', 'name email');

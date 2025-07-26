@@ -8,9 +8,9 @@ import {
     searchCompaniesByName,
     getCompaniesByLocation,
     aiEnhancedCompanySearch
-} from '../controllers/company.controller.js';
+} from '../conroller/company.controller.js';
 
-import { isAuthenticated } from '../middlewares/auth.middleware.js';
+import { isAuthenticated } from '../middleware/isAuthenticated.js';
 
 const router = express.Router();
 
