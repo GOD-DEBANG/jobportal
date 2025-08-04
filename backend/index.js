@@ -13,7 +13,7 @@ dotenv.config(); //  No need to pass an empty object
 
 const app = express();
 
-// 🔌 Middleware
+//  Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
